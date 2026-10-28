@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GATE CS 2027 — Study Tracker</title>
+<style>
+:root {
+  --navy:#1a2e4a; --blue:#185FA5; --teal:#0F6E56; --amber:#BA7517;
+  --coral:#993C1D; --purple:#534AB7; --pink:#993556;
+  --lgray:#F5F4F0; --mgray:#D3D1C7; --dgray:#444441;
+  --white:#ffffff; --text:#2C2C2A; --textsec:#5F5E5A;
+  --radius:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0EEE8;color:var(--text);font-size:14px;}
+header{background:var(--navy);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100;}
+header h1{font-size:18px;font-weight:600;}
+header p{font-size:12px;opacity:0.7;margin-top:2px;}
+.stats-bar{display:flex;gap:16px;flex-wrap:wrap;}
+.stat{background:rgba(255,255,255,0.12);border-radius:6px;padding:6px 14px;text-align:center;}
+.stat-val{font-size:20px;font-weight:700;}
+.stat-lbl{font-size:10px;opacity:0.75;}
+.nav{display:flex;gap:6px;padding:16px 24px 8px;flex-wrap:wrap;background:#E8E6DF;border-bottom:1px solid var(--mgray);}
+.nav-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--mgray);background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:var(--textsec);transition:all 0.15s;}
+.nav-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.container{max-width:1100px;margin:0 auto;padding:20px 24px;}
+.month-card{background:#fff;border-radius:10px;border:1px solid var(--mgray);margin-bottom:20px;overflow:hidden;}
+.month-hdr{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.month-hdr h2{font-size:15px;font-weight:600;}
+.month-meta{font-size:12px;opacity:0.75;margin-top:2px;}
+.month-prog{display:flex;align-items:center;gap:10px;}
+.prog-bar{width:120px;height:8px;background:var(--lgray);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width 0.4s;}
+.prog-pct{font-size:12px;font-weight:600;min-width:32px;text-align:right;}
+.chevron{font-size:16px;transition:transform 0.2s;color:var(--textsec);}
+.month-body{display:none;padding:0 0 12px;}
+.month-body.open{display:block;}
+.week-block{margin:0 18px 10px;}
+.week-hdr{font-size:12px;font-weight:600;color:var(--textsec);text-transform:uppercase;letter-spacing:0.06em;padding:8px 0 4px;border-bottom:1px solid var(--lgray);}
+.topic-row{display:grid;grid-template-columns:28px 1fr 90px 90px 70px 80px 60px;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #f0efe9;}
+.topic-row:last-child{border-bottom:none;}
+.topic-row.done{background:#f0faf6;}
+.topic-row.done .topic-name{text-decoration:line-through;color:var(--textsec);}
+.check{width:20px;height:20px;border-radius:4px;border:2px solid var(--mgray);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.check.checked{background:var(--teal);border-color:var(--teal);color:#fff;}
+.check svg{display:none;}
+.check.checked svg{display:block;}
+.topic-name{font-size:13px;line-height:1.4;}
+.topic-sub{font-size:11px;color:var(--textsec);margin-top:1px;}
+input[type=number]{width:80px;padding:4px 6px;border:1px solid var(--mgray);border-radius:5px;font-size:12px;text-align:center;background:var(--lgray);}
+input[type=number]:focus{outline:2px solid var(--blue);background:#fff;}
+.rev-btns{display:flex;gap:4px;align-items:center;}
+.rev-badge{background:var(--purple);color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;min-width:26px;text-align:center;}
+.rev-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--mgray);background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--textsec);}
+.rev-btn:hover{background:var(--lgray);}
+.time-input{width:70px;padding:4px 5px;border:1px solid var(--mgray);border-radius:5px;font-size:12px;text-align:center;background:var(--lgray);}
+.status-sel{padding:4px 5px;border:1px solid var(--mgray);border-radius:5px;font-size:11px;background:var(--lgray);color:var(--text);cursor:pointer;}
+.status-sel.todo{border-color:var(--mgray);}
+.status-sel.inprog{border-color:var(--amber);background:#FFF8EE;color:var(--amber);}
+.status-sel.done-s{border-color:var(--teal);background:#EEF9F5;color:var(--teal);}
+.status-sel.revise{border-color:var(--coral);background:#FFF0EC;color:var(--coral);}
+.col-hdr{font-size:10px;font-weight:600;color:var(--textsec);text-transform:uppercase;letter-spacing:0.04em;padding:6px 4px 2px;display:grid;grid-template-columns:28px 1fr 90px 90px 70px 80px 60px;gap:8px;border-bottom:1px solid var(--mgray);}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:200;}
+.save-toast.show{opacity:1;}
+.toolbar{display:flex;gap:8px;padding:0 24px 12px;flex-wrap:wrap;background:#E8E6DF;}
+.tool-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--mgray);background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:var(--text);}
+.tool-btn:hover{background:var(--lgray);}
+.tool-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--textsec);}
+.leg{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:10px;height:10px;border-radius:2px;}
+@media(max-width:700px){
+  .topic-row,.col-hdr{grid-template-columns:24px 1fr 70px 70px 60px 70px 50px;}
+  input[type=number],.time-input{width:60px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>GATE CS 2027 — Study Tracker</h1>
+    <p>IIT Madras · Feb 2027 · Track every topic, revision & question</p>
+  </div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="totalDone">0</div><div class="stat-lbl">Topics Done</div></div>
+    <div class="stat"><div class="stat-val" id="totalQ">0</div><div class="stat-lbl">Qs Practiced</div></div>
+    <div class="stat"><div class="stat-val" id="totalHrs">0h</div><div class="stat-lbl">Study Hours</div></div>
+    <div class="stat"><div class="stat-val" id="totalRevs">0</div><div class="stat-lbl">Revisions</div></div>
+    <div class="stat"><div class="stat-val" id="overallPct">0%</div><div class="stat-lbl">Overall</div></div>
+  </div>
+</header>
+
+<div class="nav" id="subjectNav">
+  <button class="nav-btn active" onclick="filterSubject('all',this)">All Subjects</button>
+</div>
+<div class="toolbar">
+  <button class="tool-btn primary" onclick="saveAll()">Save Progress</button>
+  <button class="tool-btn" onclick="exportCSV()">Export CSV</button>
+  <button class="tool-btn" onclick="resetAll()" style="color:var(--coral)">Reset All</button>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:var(--mgray)"></div>Not Started</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--amber)"></div>In Progress</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--teal)"></div>Done</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--coral)"></div>Need Revision</div>
+  </div>
+</div>
+
+<div class="container" id="mainContent"></div>
+<div class="save-toast" id="toast">Saved!</div>
+
+<script>
+const SUBJECTS = {
+  "Discrete Mathematics": {color:"#185FA5", months:["May 2026"], weeks:{
+    "Week 1 — Sets, Logic & Relations":["Propositional Logic (AND/OR/NOT, truth tables, equivalences)","Predicate Logic (quantifiers, logical inference)","Sets (operations, power sets, Venn diagrams)","Relations (reflexive, symmetric, transitive, equivalence, partial order)"],
+    "Week 2 — Graph Theory & Counting":["Graph basics (vertices, edges, degree, types of graphs)","Graph traversals (BFS, DFS) and connectivity","Trees (spanning trees, properties)","Counting (permutations, combinations, pigeonhole principle, inclusion-exclusion)"],
+  }},
+  "Digital Logic": {color:"#0F6E56", months:["May 2026"], weeks:{
+    "Week 3 — Boolean Algebra & Circuits":["Boolean algebra (laws, De Morgan's theorem)","Karnaugh Maps (2, 3, 4 variable simplification)","Combinational circuits (MUX, DEMUX, Adders, Subtractors)","Decoders, Encoders, Comparators"],
+    "Week 3 (cont.) — Sequential Circuits":["Flip-flops (SR, D, JK, T) and state tables","Registers and Counters","Finite State Machines (Mealy, Moore)","Programmable Logic (basic)"],
+  }},
+  "Engineering Mathematics": {color:"#534AB7", months:["May 2026"], weeks:{
+    "Week 4 — Linear Algebra":["Matrices (operations, rank, determinant)","Systems of linear equations (Gaussian elimination)","Eigenvalues and eigenvectors","Vector spaces (basics)"],
+    "Week 4 (cont.) — Calculus & Probability":["Limits, continuity, differentiability","Integration (definite, indefinite, applications)","Probability (Bayes theorem, conditional probability)","Random variables, distributions (Binomial, Normal, Poisson), Expectation"],
+  }},
+  "Data Structures": {color:"#993C1D", months:["June 2026"], weeks:{
+    "Week 1 — Linear Structures":["Arrays (1D, 2D, operations, time complexities)","Linked Lists (singly, doubly, circular — insert/delete/search)","Stacks (applications: balanced parentheses, infix/postfix)","Queues (circular queue, deque, priority queue)"],
+    "Week 2 — Trees":["Binary Trees (traversals: inorder, preorder, postorder)","Binary Search Trees (insert, delete, search, balancing)","AVL Trees (rotations: LL, RR, LR, RL)","B-Trees and B+ Trees (structure, search, insert)"],
+    "Week 2 (cont.) — Advanced Structures":["Heaps (min-heap, max-heap, heapify, heap sort)","Hash Tables (chaining, open addressing, load factor)","Tries (insert, search, applications)","Graphs (adjacency matrix vs list, BFS, DFS, topological sort)"],
+  }},
+  "Algorithms": {color:"#BA7517", months:["June 2026"], weeks:{
+    "Week 3 — Sorting & Searching":["Bubble, Selection, Insertion sort (analysis)","Merge Sort (divide & conquer proof, complexity)","Quick Sort (pivot strategies, worst case)","Heap Sort, Counting Sort, Radix Sort"],
+    "Week 4 — Greedy & Dynamic Programming":["Greedy: Activity Selection, Fractional Knapsack, Huffman Coding","Greedy: MST (Kruskal, Prim) — correctness proofs","DP: Fibonacci, LCS, LIS, 0/1 Knapsack","DP: Matrix Chain Multiplication, Edit Distance, Coin Change"],
+    "Week 4 (cont.) — Graph Algorithms":["Dijkstra's algorithm (correctness, complexity)","Bellman-Ford (negative weights, cycle detection)","Floyd-Warshall (all-pairs shortest path)","DFS applications: SCC, articulation points, biconnected components"],
+  }},
+  "Operating Systems": {color:"#993556", months:["July 2026"], weeks:{
+    "Week 1 — Process Management":["Process states, PCB, context switching","CPU Scheduling: FCFS, SJF (preemptive/non-preemptive)","Round Robin (time quantum effects), Priority Scheduling","Multilevel Queue, Multilevel Feedback Queue, Gantt charts"],
+    "Week 2 — Memory Management":["Paging (page tables, TLB, effective access time)","Segmentation (segment tables, protection)","Virtual Memory (demand paging, page faults)","Page Replacement: FIFO, LRU, Optimal, Clock — numerical problems"],
+    "Week 3 — Synchronisation & Deadlock":["Critical section problem (Peterson's solution)","Semaphores (binary, counting) — implementations","Classic problems: Producer-Consumer, Readers-Writers, Dining Philosophers","Deadlock (conditions, RAG, Banker's Algorithm, detection, prevention)"],
+  }},
+  "Theory of Computation": {color:"#185FA5", months:["July–August 2026"], weeks:{
+    "Week 4 — Finite Automata & Regular Languages":["DFA (construction, state minimisation)","NFA (construction, NFA-to-DFA conversion — subset construction)","Regular Expressions (syntax, conversion to DFA)","Pumping Lemma for Regular Languages (proofs of non-regularity)"],
+    "Week 1 (Aug) — Context-Free Languages":["Context-Free Grammars (derivation, parse trees, ambiguity)","Simplification of CFG (useless symbols, CNF, GNF)","Pushdown Automata (DPDA, NPDA)","Pumping Lemma for CFLs"],
+    "Week 1 (Aug, cont.) — Turing Machines & Decidability":["Turing Machines (construction, variants)","Decidability and Undecidability (Halting Problem)","Reductions (many-one, Turing) — key undecidable problems","NP, NP-complete, NP-hard (definitions, examples, Cook's theorem)"],
+  }},
+  "DBMS": {color:"#0F6E56", months:["August 2026"], weeks:{
+    "Week 2 — Data Models & SQL":["ER model (entities, relationships, attributes, weak entities)","Relational model (keys: super, candidate, primary, foreign)","Relational Algebra (select, project, join, set operations, rename)","SQL (SELECT, WHERE, GROUP BY, HAVING, ORDER BY, subqueries)"],
+    "Week 3 — Transactions & Normalisation":["Transactions (ACID properties)","Serializability (conflict, view) — precedence graphs","Concurrency Control (2PL — strict, rigorous)","Normalisation: 1NF, 2NF, 3NF, BCNF — decomposition, lossless, dependency preservation"],
+    "Week 3 (cont.) — Storage & Indexing":["File organisation (heap, sorted, hashed)","B+ Tree indexing (structure, search, insert, delete)","Hashing (static, dynamic/extendable hashing)","Query processing basics (cost estimation)"],
+  }},
+  "Computer Networks": {color:"#534AB7", months:["August–September 2026"], weeks:{
+    "Week 4 (Aug) — Data Link Layer":["Framing, error detection (CRC, checksum, Hamming code)","Stop-and-Wait ARQ, Go-Back-N ARQ, Selective Repeat ARQ","Sliding window protocols (efficiency calculations)","MAC protocols: ALOHA (pure, slotted), CSMA/CD, CSMA/CA"],
+    "Week 1 (Sep) — Network Layer":["IPv4 addressing, subnetting, CIDR, VLSM (numerical heavy!)","Routing algorithms: Distance Vector (RIP), Link State (OSPF)","BGP (path vector) basics","IP fragmentation, ICMP, ARP, NAT"],
+    "Week 2 (Sep) — Transport & Application Layer":["TCP (3-way handshake, 4-way termination, flow control)","TCP Congestion Control (slow start, congestion avoidance, AIMD, fast retransmit)","UDP (comparison with TCP)","Application Layer: DNS, HTTP/HTTPS, SMTP, FTP, DHCP"],
+  }},
+  "Computer Organisation & Architecture": {color:"#993C1D", months:["September 2026"], weeks:{
+    "Week 3 — Processor & Pipelining":["Number systems (signed, 2's complement, IEEE 754 floating point)","ALU design, adder circuits (ripple carry, carry lookahead)","Instruction formats, addressing modes","Pipelining (stages, throughput, hazards: structural, data, control)","Hazard resolution: forwarding, stalling, branch prediction"],
+    "Week 3 (cont.) — Cache & Memory":["Cache memory (direct mapped, set-associative, fully associative)","Cache replacement policies (LRU, FIFO, LFU)","Cache write policies (write-through, write-back)","Memory hierarchy (SRAM, DRAM, virtual memory integration)","I/O organisation (DMA, interrupts, bus arbitration)"],
+  }},
+  "Compiler Design": {color:"#BA7517", months:["September–October 2026"], weeks:{
+    "Week 4 (Sep) — Lexical & Syntax Analysis":["Lexical analysis (tokens, patterns, DFA for lexer)","First and Follow sets (computation rules, examples)","LL(1) Parsing (parse table construction, conflicts)","LR Parsing (LR(0), SLR(1), LALR(1), CLR — items, goto/action tables)"],
+    "Week 1 (Oct) — Semantic Analysis & Code Gen":["Syntax-directed definitions (synthesised, inherited attributes)","Type checking and type systems","Intermediate code generation (3-address code, DAG)","Code optimisation (common sub-expression elimination, dead code)","Code generation basics (register allocation)"],
+  }},
+  "C Programming": {color:"#0F6E56", months:["May 2026"], weeks:{
+    "Week 4 — Programming Fundamentals":["Pointers (pointer arithmetic, pointer to pointer, function pointers)","Arrays and strings (character arrays, string functions)","Recursion (tower of Hanoi, factorial, Fibonacci — tracing)","Structures, unions, dynamic memory (malloc/free)","Bit manipulation (AND, OR, XOR, shift operations — GATE favourites)"],
+  }},
+  "General Aptitude": {color:"#993556", months:["All months — 30 min/day"], weeks:{
+    "Verbal Aptitude":["Grammar rules (subject-verb agreement, tense)","Vocabulary (synonyms, antonyms, fill-in-the-blank)","Reading Comprehension (inference, tone, main idea)","Sentence ordering and correction"],
+    "Quantitative Aptitude":["Ratios, percentages, profit & loss","Time-speed-distance, work & time","Data interpretation (tables, bar charts, pie charts)","Basic algebra and number theory"],
+    "Analytical & Spatial Aptitude":["Logical reasoning (syllogisms, logical deduction)","Statement and conclusions","Pattern recognition and series","Spatial reasoning (2D/3D figures, mirror images)"],
+  }},
+};
+
+let data = {};
+function loadData(){try{const s=localStorage.getItem('gate27');if(s)data=JSON.parse(s);}catch(e){}}
+function saveData(){localStorage.setItem('gate27',JSON.stringify(data));showToast();}
+function getKey(subj,week,topic){return btoa(unescape(encodeURIComponent(subj+'|'+week+'|'+topic)));}
+function getTopicData(key){return data[key]||(data[key]={done:false,questions:0,time:0,revisions:0,status:'todo'});}
+
+function build(){
+  loadData();
+  const nav=document.getElementById('subjectNav');
+  const main=document.getElementById('mainContent');
+  main.innerHTML='';
+  const subjects=Object.keys(SUBJECTS);
+  subjects.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.className='nav-btn';
+    btn.textContent=s.split(' ').slice(0,2).join(' ');
+    btn.onclick=function(){filterSubject(s,this);};
+    nav.appendChild(btn);
+  });
+
+  subjects.forEach(subj=>{
+    const cfg=SUBJECTS[subj];
+    const card=document.createElement('div');
+    card.className='month-card';
+    card.dataset.subject=subj;
+
+    const hdr=document.createElement('div');
+    hdr.className='month-hdr';
+    hdr.innerHTML=`
+      <div>
+        <h2 style="color:${cfg.color}">${subj}</h2>
+        <div class="month-meta">${cfg.months.join(', ')} &nbsp;·&nbsp; ${Object.values(cfg.weeks).flat().length} topics</div>
+      </div>
+      <div class="month-prog">
+        <div class="prog-bar"><div class="prog-fill" id="bar-${btoa(subj)}" style="background:${cfg.color};width:0%"></div></div>
+        <span class="prog-pct" id="pct-${btoa(subj)}">0%</span>
+        <span class="chevron" id="chev-${btoa(subj)}">▼</span>
+      </div>`;
+    hdr.onclick=()=>toggleCard(subj);
+    card.appendChild(hdr);
+
+    const body=document.createElement('div');
+    body.className='month-body';
+    body.id='body-'+btoa(subj);
+
+    const colHdr=document.createElement('div');
+    colHdr.className='col-hdr';
+    colHdr.innerHTML='<span></span><span>Topic</span><span style="text-align:center">Qs Done</span><span style="text-align:center">Time (min)</span><span style="text-align:center">Revisions</span><span style="text-align:center">Status</span><span style="text-align:center">Done?</span>';
+    body.appendChild(colHdr);
+
+    Object.entries(cfg.weeks).forEach(([week,topics])=>{
+      const wb=document.createElement('div');
+      wb.className='week-block';
+      wb.innerHTML=`<div class="week-hdr">${week}</div>`;
+      topics.forEach(topic=>{
+        const key=getKey(subj,week,topic);
+        const td=getTopicData(key);
+        const row=document.createElement('div');
+        row.className='topic-row'+(td.done?' done':'');
+        row.id='row-'+key;
+        row.innerHTML=`
+          <div class="check ${td.done?'checked':''}" onclick="toggleDone('${key}',this)" title="Mark complete">
+            <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+          </div>
+          <div><div class="topic-name">${topic}</div></div>
+          <input type="number" min="0" value="${td.questions}" placeholder="0" onchange="updateField('${key}','questions',this.value)" title="Questions practiced">
+          <input class="time-input" type="number" min="0" value="${td.time}" placeholder="0" onchange="updateField('${key}','time',this.value)" title="Time in minutes">
+          <div class="rev-btns">
+            <button class="rev-btn" onclick="changeRev('${key}',-1)" title="Decrease revisions">-</button>
+            <span class="rev-badge" id="rev-${key}">${td.revisions}</span>
+            <button class="rev-btn" onclick="changeRev('${key}',1)" title="Increase revisions">+</button>
+          </div>
+          <select class="status-sel ${statusClass(td.status)}" onchange="updateStatus('${key}',this)" title="Status">
+            <option value="todo" ${td.status==='todo'?'selected':''}>Not Started</option>
+            <option value="inprog" ${td.status==='inprog'?'selected':''}>In Progress</option>
+            <option value="done" ${td.status==='done'?'selected':''}>Done</option>
+            <option value="revise" ${td.status==='revise'?'selected':''}>Need Revision</option>
+          </select>
+          <div class="check ${td.done?'checked':''}" onclick="toggleDone('${key}',this)" style="margin:0 auto;">
+            <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+          </div>`;
+        wb.appendChild(row);
+      });
+      body.appendChild(wb);
+    });
+    card.appendChild(body);
+    main.appendChild(card);
+    updateSubjectProgress(subj);
+  });
+  updateGlobalStats();
+}
+
+function statusClass(s){return s==='inprog'?'inprog':s==='done'?'done-s':s==='revise'?'revise':'todo';}
+
+function toggleCard(subj){
+  const body=document.getElementById('body-'+btoa(subj));
+  const chev=document.getElementById('chev-'+btoa(subj));
+  body.classList.toggle('open');
+  chev.textContent=body.classList.contains('open')?'▲':'▼';
+}
+
+function toggleDone(key,el){
+  const td=getTopicData(key);
+  td.done=!td.done;
+  // toggle all checkboxes for this key
+  document.querySelectorAll('[onclick*="'+key+'"]').forEach(c=>{
+    if(c.classList.contains('check')){c.classList.toggle('checked',td.done);}
+  });
+  const row=document.getElementById('row-'+key);
+  if(row){row.classList.toggle('done',td.done);}
+  saveData();
+  // find subject
+  for(const subj of Object.keys(SUBJECTS)){
+    for(const topics of Object.values(SUBJECTS[subj].weeks)){
+      if(topics.some(t=>getKey(subj,Object.keys(SUBJECTS[subj].weeks).find(w=>SUBJECTS[subj].weeks[w].includes(t)),t)===key)){
+        updateSubjectProgress(subj);break;
+      }
+    }
+  }
+  updateGlobalStats();
+}
+
+function updateField(key,field,val){
+  getTopicData(key)[field]=parseInt(val)||0;
+  saveData();updateGlobalStats();
+}
+
+function changeRev(key,delta){
+  const td=getTopicData(key);
+  td.revisions=Math.max(0,(td.revisions||0)+delta);
+  const el=document.getElementById('rev-'+key);
+  if(el)el.textContent=td.revisions;
+  saveData();updateGlobalStats();
+}
+
+function updateStatus(key,sel){
+  const td=getTopicData(key);
+  td.status=sel.value;
+  sel.className='status-sel '+statusClass(sel.value);
+  saveData();
+}
+
+function updateSubjectProgress(subj){
+  const weeks=SUBJECTS[subj].weeks;
+  const topics=Object.entries(weeks).flatMap(([w,ts])=>ts.map(t=>getTopicData(getKey(subj,w,t))));
+  const done=topics.filter(t=>t.done).length;
+  const pct=topics.length?Math.round(done/topics.length*100):0;
+  const bar=document.getElementById('bar-'+btoa(subj));
+  const pctEl=document.getElementById('pct-'+btoa(subj));
+  if(bar)bar.style.width=pct+'%';
+  if(pctEl)pctEl.textContent=pct+'%';
+}
+
+function updateGlobalStats(){
+  let done=0,qs=0,mins=0,revs=0,total=0;
+  Object.keys(SUBJECTS).forEach(subj=>{
+    Object.entries(SUBJECTS[subj].weeks).forEach(([w,ts])=>{
+      ts.forEach(t=>{
+        total++;
+        const td=getTopicData(getKey(subj,w,t));
+        if(td.done)done++;
+        qs+=td.questions||0;
+        mins+=td.time||0;
+        revs+=td.revisions||0;
+      });
+    });
+  });
+  document.getElementById('totalDone').textContent=done;
+  document.getElementById('totalQ').textContent=qs;
+  document.getElementById('totalHrs').textContent=Math.round(mins/60*10)/10+'h';
+  document.getElementById('totalRevs').textContent=revs;
+  document.getElementById('overallPct').textContent=total?Math.round(done/total*100)+'%':'0%';
+}
+
+function filterSubject(subj,btn){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.month-card').forEach(c=>{
+    c.style.display=(subj==='all'||c.dataset.subject===subj)?'':'none';
+  });
+}
+
+function saveAll(){saveData();}
+function showToast(){
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function exportCSV(){
+  const rows=[['Subject','Week','Topic','Done','Questions Practiced','Time (min)','Revisions','Status']];
+  Object.keys(SUBJECTS).forEach(subj=>{
+    Object.entries(SUBJECTS[subj].weeks).forEach(([week,topics])=>{
+      topics.forEach(topic=>{
+        const td=getTopicData(getKey(subj,week,topic));
+        rows.push([subj,week,topic,td.done?'Yes':'No',td.questions||0,td.time||0,td.revisions||0,td.status||'todo']);
+      });
+    });
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='GATE_CS_2027_Progress.csv';
+  a.click();
+}
+
+function resetAll(){
+  if(!confirm('Reset ALL progress? This cannot be undone.'))return;
+  data={};saveData();location.reload();
+}
+
+// Auto-save every 30 seconds
+setInterval(saveData,30000);
+build();
+</script>
+</body>
+</html>
